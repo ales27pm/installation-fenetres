@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from views.ui import create_main_window, view_clients, modify_client, delete_client
+from views.ui import create_main_window
 
 # Initialisation de la base de données
 def init_db():
@@ -14,7 +14,6 @@ def init_db():
         nom TEXT,
         entreprise TEXT,
         personne_ressource TEXT,
-        contact TEXT,
         adresse TEXT,
         telephone TEXT,
         email TEXT

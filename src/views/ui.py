@@ -3,7 +3,6 @@ from tkinter import ttk, messagebox
 import sqlite3
 import os
 
-
 def create_main_window():
     root = tk.Tk()
     root.title("Gestion des Clients - Installation Fenêtres")
@@ -19,23 +18,24 @@ def create_main_window():
 
     btn_view_clients = ttk.Button(
         button_frame, text="Voir Clients",
-        command=lambda: view_clients()
+        command=view_clients
     )
     btn_view_clients.grid(column=1, row=0, padx=5, pady=5)
 
     btn_edit_client = ttk.Button(
         button_frame, text="Modifier Client",
-        command=lambda: modify_client()
+        command=lambda: modify_client(root)
     )
     btn_edit_client.grid(column=2, row=0, padx=5, pady=5)
 
     btn_delete_client = ttk.Button(
         button_frame, text="Supprimer Client",
-        command=lambda: delete_client()
+        command=lambda: delete_client(root)
     )
     btn_delete_client.grid(column=3, row=0, padx=5, pady=5)
 
     root.mainloop()
+
 def show_add_client_form(root):
     form_window = tk.Toplevel(root)
     form_window.title("Ajouter un Client")
@@ -49,7 +49,6 @@ def show_add_client_form(root):
         form_window, client_type, "Particulier", "Particulier", "Entreprise"
     )
     type_menu.grid(column=1, row=0, sticky=tk.W)
-
     label_nom = ttk.Label(form_window, text="Nom du Client:")
     label_nom.grid(column=0, row=1, sticky=tk.W)
     entry_nom = ttk.Entry(form_window)
@@ -99,10 +98,8 @@ def show_add_client_form(root):
             entry_telephone.grid(column=1, row=3, sticky=tk.W)
             label_email.grid(column=0, row=4, sticky=tk.W)
             entry_email.grid(column=1, row=4, sticky=tk.W)
-
     client_type.trace_add("write", update_form)
 
-    # Bouton de sauvegarde
     btn_save = ttk.Button(
         form_window, text="Enregistrer",
         command=lambda: save_client(
@@ -112,6 +109,7 @@ def show_add_client_form(root):
         )
     )
     btn_save.grid(column=0, row=7, columnspan=2, pady=10)
+
 def save_client(client_type, nom, entreprise, personne, adresse, telephone, email):
     db_path = os.path.join('/home/kali/installation-fenetres/data', 'clients.db')
     print(f"Connecting to database at {db_path}")
@@ -127,7 +125,6 @@ def save_client(client_type, nom, entreprise, personne, adresse, telephone, emai
     conn.close()
     messagebox.showinfo("Succès", "Le client a été ajouté avec succès.")
 
-
 def get_clients():
     db_path = os.path.join('/home/kali/installation-fenetres/data', 'clients.db')
     conn = sqlite3.connect(db_path)
@@ -138,7 +135,6 @@ def get_clients():
 
     conn.close()
     return clients
-
 
 def view_clients():
     clients = get_clients()
@@ -160,97 +156,12 @@ def view_clients():
 
     tree.pack(expand=True, fill=tk.BOTH)
 
+def modify_client(root):
+    window = tk.Toplevel(root)
+    window.title("Modifier Client")
+    # Implement the logic to modify a client here
 
-def modify_client():
-    selected_item = tree.selection()
-    if not selected_item:
-        messagebox.showerror("Erreur", "Veuillez sélectionner un client à modifier.")
-        return
-
-    client_id = tree.item(selected_item)['values'][0]
-
-    db_path = os.path.join('/home/kali/installation-fenetres/data', 'clients.db')
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM clients WHERE id=?", (client_id,))
-    client = cursor.fetchone()
-    conn.close()
-
-    if client:
-        modify_window = tk.Toplevel()
-        modify_window.title("Modifier le Client")
-
-        tk.Label(modify_window, text="Nom du Client:").grid(row=0, column=0)
-        entry_nom = tk.Entry(modify_window)
-        entry_nom.grid(row=0, column=1)
-
-        tk.Label(modify_window, text="Nom de l'Entreprise:").grid(row=1, column=0)
-        entry_entreprise = tk.Entry(modify_window)
-        entry_entreprise.grid(row=1, column=1)
-
-        tk.Label(modify_window, text="Personne Ressource:").grid(row=2, column=0)
-        entry_personne = tk.Entry(modify_window)
-        entry_personne.grid(row=2, column=1)
-
-        tk.Label(modify_window, text="Adresse:").grid(row=3, column=0)
-        entry_adresse = tk.Entry(modify_window)
-        entry_adresse.grid(row=3, column=1)
-
-        tk.Label(modify_window, text="Téléphone:").grid(row=4, column=0)
-        entry_telephone = tk.Entry(modify_window)
-        entry_telephone.grid(row=4, column=1)
-
-        tk.Label(modify_window, text="Email:").grid(row=5, column=0)
-        entry_email = tk.Entry(modify_window)
-        entry_email.grid(row=5, column=1)
-
-        entry_nom.insert(0, client[1])
-        entry_entreprise.insert(0, client[2])
-        entry_personne.insert(0, client[3])
-        entry_adresse.insert(0, client[4])
-        entry_telephone.insert(0, client[5])
-        entry_email.insert(0, client[6])
-
-        def save_changes():
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE clients
-                SET nom=?, entreprise=?, personne_ressource=?, adresse=?, telephone=?, email=?
-                WHERE id=?
-            ''', (entry_nom.get(), entry_entreprise.get(), entry_personne.get(),
-                  entry_adresse.get(), entry_telephone.get(), entry_email.get(), client_id))
-
-            conn.commit()
-            conn.close()
-            messagebox.showinfo("Succès", "Les informations du client ont été mises à jour.")
-            modify_window.destroy()
-
-        btn_save_changes = ttk.Button(modify_window, text="Enregistrer les modifications", command=save_changes)
-        btn_save_changes.grid(row=6, column=0, columnspan=2, pady=10)
-
-    else:
-        messagebox.showerror("Erreur", "Client non trouvé.")
-
-
-def delete_client():
-    selected_item = tree.selection()
-    if not selected_item:
-        messagebox.showerror("Erreur", "Veuillez sélectionner un client à supprimer.")
-        return
-
-    client_id = tree.item(selected_item)['values'][0]
-
-    confirm = messagebox.askyesno("Confirmer", "Êtes-vous sûr de vouloir supprimer ce client?")
-    if confirm:
-        db_path = os.path.join('/home/kali/installation-fenetres/data', 'clients.db')
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("DELETE FROM clients WHERE id=?", (client_id,))
-        conn.commit()
-        conn.close()
-
-        tree.delete(selected_item)
-        messagebox.showinfo("Succès", "Client supprimé avec succès.")
+def delete_client(root):
+    window = tk.Toplevel(root)
+    window.title("Supprimer Client")
+    # Implement the logic to delete a client here
