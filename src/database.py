@@ -11,6 +11,8 @@ def connect_db():
 def init_db():
     conn = connect_db()
     cursor = conn.cursor()
+    
+    # Création de la table clients
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,9 +24,26 @@ def init_db():
             email TEXT
         )
     ''')
+    
+    # Création de la table soumissions
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS soumissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_id INTEGER,
+            description TEXT,
+            dimensions TEXT,
+            couleur TEXT,
+            prix REAL,
+            date TEXT,
+            FOREIGN KEY(client_id) REFERENCES clients(id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
+
+# Fonctions de gestion des clients
 def add_client(nom, entreprise, personne_ressource, adresse, telephone, email):
     conn = connect_db()
     cursor = conn.cursor()
@@ -68,3 +87,53 @@ def delete_client(client_id):
     cursor.execute("DELETE FROM clients WHERE id=?", (client_id,))
     conn.commit()
     conn.close()
+
+# Fonctions de gestion des soumissions
+def add_soumission(client_id, description, dimensions, couleur, prix, date):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO soumissions (client_id, description, dimensions, couleur, prix, date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (client_id, description, dimensions, couleur, prix, date))
+    conn.commit()
+    conn.close()
+
+def get_soumissions():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.id, c.nom, s.description, s.dimensions, s.couleur, s.prix, s.date
+        FROM soumissions s
+        JOIN clients c ON s.client_id = c.id
+    ''')
+    soumissions = cursor.fetchall()
+    conn.close()
+    return soumissions
+
+def get_soumission_by_id(soumission_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM soumissions WHERE id=?", (soumission_id,))
+    soumission = cursor.fetchone()
+    conn.close()
+    return soumission
+
+def update_soumission(soumission_id, description, dimensions, couleur, prix, date):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE soumissions
+        SET description=?, dimensions=?, couleur=?, prix=?, date=?
+        WHERE id=?
+    ''', (description, dimensions, couleur, prix, date, soumission_id))
+    conn.commit()
+    conn.close()
+
+def delete_soumission(soumission_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM soumissions WHERE id=?", (soumission_id,))
+    conn.commit()
+    conn.close()
+
